@@ -27,8 +27,14 @@ const Members = () => {
   }, []);
 
   const fetchMembers = async () => {
-    const querySnapshot = await getDocs(collection(db, 'members'));
-    setMembers(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
+    try {
+      const querySnapshot = await getDocs(collection(db, 'members'));
+      const membersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      console.log("Fetched Members Data: ", membersData); // Debugging log
+      setMembers(membersData);
+    } catch (error) {
+      console.error("Error fetching members: ", error);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -218,7 +224,7 @@ const Members = () => {
             Cancel
           </Button>
           <Button onClick={handleSubmit} color="primary">
-            {dialogMode === 'add' ? 'Add' : 'Save'}
+            {dialogMode === 'add' ? 'Add' : 'Save'} 
           </Button>
         </DialogActions>
       </Dialog>

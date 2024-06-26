@@ -1,4 +1,3 @@
-// src/components/QRCode.js
 import React from 'react';
 import QRCode from 'qrcode.react';
 import './QrCode.css'; // Import CSS file

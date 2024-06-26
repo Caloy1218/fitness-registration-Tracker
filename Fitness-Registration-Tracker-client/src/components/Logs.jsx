@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { DataGrid } from '@mui/x-data-grid';
 import { Button, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, TextField, Box } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -28,16 +28,30 @@ const Logs = () => {
   }, [logs, selectedDate]);
 
   const fetchLogs = async () => {
-    const querySnapshot = await getDocs(collection(db, 'logs'));
-    setLogs(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, timestamp: doc.data().timestamp.toDate() })));
+    try {
+      const querySnapshot = await getDocs(collection(db, 'logs'));
+      const logsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        timeIn: doc.data().timeIn?.toDate().toLocaleString(),
+        timeOut: doc.data().timeOut ? doc.data().timeOut.toDate().toLocaleString() : '',
+      }));
+      setLogs(logsData);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    }
   };
 
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, 'logs', id));
-    fetchLogs();
+    try {
+      await deleteDoc(doc(db, 'logs', id));
+      fetchLogs();
+    } catch (error) {
+      console.error('Error deleting log:', error);
+    }
   };
 
-  const handleEdit = (log) => {
+  const handleEdit = async (log) => {
     setEditingLog(log);
     setFullName(log.fullName);
     setMembershipOption(log.membershipOption);
@@ -52,37 +66,31 @@ const Logs = () => {
   };
 
   const handleSubmit = async () => {
-    if (editingLog) {
-      await updateDoc(doc(db, 'logs', editingLog.id), {
-        fullName,
-        membershipOption,
-      });
-      fetchLogs();
+    try {
+      if (editingLog) {
+        await updateDoc(doc(db, 'logs', editingLog.id), {
+          fullName,
+          membershipOption,
+          timeOut: Timestamp.now(), // Update timeOut when saving edits
+        });
+        fetchLogs();
+      }
+      setOpenDialog(false);
+    } catch (error) {
+      console.error('Error updating log:', error);
     }
-    setOpenDialog(false);
   };
 
   const filterLogsByDate = (date) => {
-    const filtered = logs.filter(log => dayjs(log.timestamp).isSame(date, 'day'));
+    const filtered = logs.filter(log => dayjs(log.timeIn).isSame(date, 'day'));
     setFilteredLogs(filtered);
   };
 
   const columns = [
     { field: 'fullName', headerName: 'Name', flex: 1 },
     { field: 'membershipOption', headerName: 'Membership Option', flex: 1 },
-    {
-      field: 'timestamp',
-      headerName: 'Timestamp',
-      flex: 1,
-      type: 'dateTime',
-      valueGetter: (params) => {
-        const timestamp = params.value;
-        if (timestamp) {
-          return new Date(timestamp.seconds * 1000);
-        }
-        return null;
-      },
-    },
+    { field: 'timeIn', headerName: 'Time In', flex: 1 },
+    { field: 'timeOut', headerName: 'Time Out', flex: 1 },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -110,7 +118,7 @@ const Logs = () => {
             label="Select Date"
             value={selectedDate}
             onChange={(newValue) => setSelectedDate(newValue)}
-            renderInput={(params) => <TextField {...params} />}
+            textField={<TextField />}
           />
         </Box>
         <div style={{ height: 400, width: '100%' }}>

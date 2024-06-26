@@ -1,6 +1,7 @@
-// src/components/Register.js
 import React, { useState } from 'react';
 import axios from 'axios';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import './Register.css'; // Import CSS file
 
 const Register = () => {
@@ -35,6 +36,17 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Add member data to Firestore
+      await addDoc(collection(db, 'members'), {
+        fullName,
+        email,
+        address,
+        phoneNumber,
+        membershipOption,
+        membershipPrice,
+      });
+
+      // Send registration data to the server to handle email sending
       await axios.post('http://localhost:5000/register', {
         fullName,
         email,
@@ -43,6 +55,7 @@ const Register = () => {
         membershipOption,
         membershipPrice,
       });
+
       alert('Registration successful and email sent!');
       // Clear form inputs after submission
       setFullName('');
@@ -84,7 +97,7 @@ const Register = () => {
         />
         <input
           type="tel"
-          placeholder="Phone Number"  
+          placeholder="Phone Number"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
           required
