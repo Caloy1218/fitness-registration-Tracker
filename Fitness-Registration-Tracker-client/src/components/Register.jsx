@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import './Register.css'; // Import CSS file
 
 const Register = () => {
@@ -11,6 +12,7 @@ const Register = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [membershipOption, setMembershipOption] = useState('');
   const [membershipPrice, setMembershipPrice] = useState(0);
+  const [openDialog, setOpenDialog] = useState(false); // State for dialog
 
   const handleMembershipChange = (e) => {
     const option = e.target.value;
@@ -36,7 +38,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Add member data to Firestore
+      console.log('Submitting registration...');
       await addDoc(collection(db, 'members'), {
         fullName,
         email,
@@ -45,8 +47,10 @@ const Register = () => {
         membershipOption,
         membershipPrice,
       });
-
-      // Send registration data to the server to handle email sending
+  
+      console.log('Data added to Firestore.');
+  
+      console.log('Sending registration data to server...');
       await axios.post('http://localhost:5000/register', {
         fullName,
         email,
@@ -55,8 +59,11 @@ const Register = () => {
         membershipOption,
         membershipPrice,
       });
-
-      alert('Registration successful and email sent!');
+  
+      console.log('Registration request sent.');
+  
+      setOpenDialog(true); // Open dialog on successful registration
+  
       // Clear form inputs after submission
       setFullName('');
       setEmail('');
@@ -68,6 +75,10 @@ const Register = () => {
       console.error('Error registering user:', error);
       alert('Error registering user.');
     }
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false); // Close dialog
   };
 
   return (
@@ -109,6 +120,19 @@ const Register = () => {
           <option value="Option 3">1 year (PHP 8500)</option>
         </select>
         <button type="submit">Register</button>
+
+        {/* Dialog for successful registration */}
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>Registration Successful!</DialogTitle>
+          <DialogContent>
+            <p>Your registration was successful. An email has been sent.</p>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       </form>
     </div>
   );

@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
 import { collection, getDocs, deleteDoc, doc, updateDoc, addDoc } from 'firebase/firestore';
 import QRCodeGenerator from './QrCode';
-import './Members.css'; // Import CSS file
-import { Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, IconButton, Paper } from '@mui/material';
+import { Button, TextField, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, MenuItem, IconButton, Paper, Typography, Grid, useMediaQuery, useTheme } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { CSVLink } from 'react-csv';
 
 const Members = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [members, setMembers] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('add'); // 'add' or 'edit'
@@ -30,7 +32,6 @@ const Members = () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'members'));
       const membersData = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-      console.log("Fetched Members Data: ", membersData); // Debugging log
       setMembers(membersData);
     } catch (error) {
       console.error("Error fetching members: ", error);
@@ -97,7 +98,6 @@ const Members = () => {
     fetchMembers();
   };
 
-  // Export CSV function
   const exportToCSV = () => {
     const csvData = members.map(member => ({
       Name: member.fullName,
@@ -123,25 +123,40 @@ const Members = () => {
       flex: 1,
       sortable: false,
       renderCell: (params) => (
-        <div>
-          <IconButton onClick={() => handleEdit(params.row)}>
-            <EditIcon />
-          </IconButton>
-          <IconButton onClick={() => handleDelete(params.row.id)}>
-            <DeleteIcon />
-          </IconButton>
-          <QRCodeGenerator text={`${params.row.fullName}-${params.row.membershipOption}`} />
-        </div>
+        <Grid container spacing={isMobile ? 1 : 2} alignItems="center">
+          <Grid item>
+            <IconButton onClick={() => handleEdit(params.row)}>
+              <EditIcon />
+            </IconButton>
+          </Grid>
+          <Grid item>
+            <IconButton onClick={() => handleDelete(params.row.id)}>
+              <DeleteIcon />
+            </IconButton>
+          </Grid>
+          <Grid item>
+            <QRCodeGenerator text={`${params.row.fullName}-${params.row.membershipOption}`} />
+          </Grid>
+        </Grid>
       )
     }
   ];
 
   return (
     <div className="members-container">
-      <h2>Members</h2>
-      <Button variant="contained" color="primary" style={{ marginBottom: '10px', marginLeft: '10px' }}>
-        <CSVLink data={exportToCSV()} filename={"members.csv"}>Export CSV</CSVLink>
-      </Button>
+      <Typography variant="h4" gutterBottom align="center">Members</Typography>
+      <Grid container justifyContent="flex-end" alignItems="center" spacing={2} style={{ marginBottom: '10px' }}>
+        <Grid item>
+          <Button variant="contained" color="primary" onClick={handleAdd}>Add Member</Button>
+        </Grid>
+        <Grid item>
+          <Button variant="outlined" color="primary">
+            <CSVLink data={exportToCSV()} filename={"members.csv"} style={{ textDecoration: 'none', color: 'inherit' }}>
+              Export CSV
+            </CSVLink>
+          </Button>
+        </Grid>
+      </Grid>
       <Paper style={{ height: 400, width: '100%' }}>
         <DataGrid
           rows={members}
@@ -152,7 +167,7 @@ const Members = () => {
       </Paper>
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{dialogMode === 'add' ? 'Add Member' : 'Edit Member'}</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers>
           <DialogContentText>
             Please fill out the form below:
           </DialogContentText>
@@ -224,7 +239,7 @@ const Members = () => {
             Cancel
           </Button>
           <Button onClick={handleSubmit} color="primary">
-            {dialogMode === 'add' ? 'Add' : 'Save'} 
+            {dialogMode === 'add' ? 'Add' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>

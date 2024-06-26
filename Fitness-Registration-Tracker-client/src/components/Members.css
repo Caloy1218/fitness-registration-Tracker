@@ -1,41 +1,31 @@
-/* src/components/Members.css
 .members-container {
-    max-width: 800px;
-    margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.members-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.data-grid-container {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .members-container {
+    padding: 10px;
   }
-  
-  .member-card {
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 15px;
+  .dialog-content {
+    gap: 5px;
   }
-  
-  .member-card p {
-    margin-bottom: 10px;
-  }
-  
-  .member-card button {
-    margin-right: 10px;
-    padding: 8px 12px;
-    font-size: 14px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-  }
-  
-  .member-card button:hover {
-    background-color: #0056b3;
-  }
-  
-  .member-details {
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .qr-code-container {
-    margin-top: 10px;
-  }
-   */
+}

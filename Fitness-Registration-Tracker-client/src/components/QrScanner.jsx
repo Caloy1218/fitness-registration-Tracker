@@ -3,14 +3,17 @@ import { QrReader } from 'react-qr-reader';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, query, where, getDocs, updateDoc, Timestamp } from 'firebase/firestore';
 import debounce from 'lodash/debounce';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, CircularProgress, Box, useMediaQuery, useTheme } from '@mui/material';
 import './QrScanner.css'; // Import CSS file
 
 const QrScanner = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [result, setResult] = useState('');
   const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isProcessingScan, setIsProcessingScan] = useState(false); // New state to prevent multiple scans
-  const [lastScanned, setLastScanned] = useState(''); // New state to store last scanned data
+  const [isProcessingScan, setIsProcessingScan] = useState(false);
+  const [lastScanned, setLastScanned] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState('');
 
@@ -18,26 +21,22 @@ const QrScanner = () => {
     if (data && data !== lastScanned && !isProcessingScan) {
       setIsProcessingScan(true);
       setLastScanned(data);
-      console.log("QR Code data:", data);
       setResult(data);
       setIsCameraActive(false);
 
       const [fullName, membershipOption] = data.split('-');
 
       try {
-        // Check if the user is already timed in
         const q = query(collection(db, 'logs'), where('fullName', '==', fullName), where('timeOut', '==', null));
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-          // Update the existing document with timeOut
           const logDoc = querySnapshot.docs[0];
           await updateDoc(logDoc.ref, {
             timeOut: Timestamp.now(),
           });
           setDialogMessage(`${fullName} timed out successfully!`);
         } else {
-          // Create a new log entry with timeIn
           await addDoc(collection(db, 'logs'), {
             fullName,
             membershipOption,
@@ -62,50 +61,56 @@ const QrScanner = () => {
 
   const debouncedProcessScan = useCallback(debounce(processScan, 2000), [lastScanned, isProcessingScan]);
 
-  const handleScan = (result) => {
-    if (result?.text) {
-      debouncedProcessScan(result.text);
+  const handleScan = (data) => {
+    if (data) {
+      debouncedProcessScan(data);
     }
   };
 
   const handleError = (err) => {
-    if (err.name !== 'NotFoundException') { // Suppress specific errors if needed
-      console.error("QR scanning issue, please try again.", err);
-    }
+    console.error("QR scanning issue:", err);
   };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
   };
 
+  const startScanner = () => {
+    setResult('');
+    setIsCameraActive(true);
+  };
+
   return (
     <div className="qr-scanner-container">
-      <h2>QR Code Scanner</h2>
-      <button onClick={() => setIsCameraActive(true)}>Start Scanning</button>
+      <Typography variant="h4" gutterBottom align="center">QR Code Scanner</Typography>
+      <Button variant="contained" color="primary" onClick={startScanner} disabled={isCameraActive}>
+        Start Scanning
+      </Button>
       {isCameraActive && (
-        <div className="qr-reader-wrapper">
+        <Box className="qr-reader-wrapper">
           <QrReader
             delay={100}
-            onResult={(result, error) => {
-              if (result) {
-                handleScan(result);
-              }
-              if (error) {
-                handleError(error);
-              }
-            }}
-            constraints={{
-              facingMode: 'environment'
-            }}
-            style={{ width: '50%' }} // Ensure the video element has a defined size
+            onError={handleError}
+            onScan={handleScan}
+            style={{ width: isMobile ? '100%' : '50%' }}
+            facingMode="environment"
           />
-        </div>
+          {isProcessingScan && (
+            <Box className="loading-overlay">
+              <CircularProgress size={50} />
+            </Box>
+          )}
+        </Box>
       )}
-      {result && <p>Scanned: {result}</p>}
+      {result && (
+        <Typography variant="body1" align="center" className="scanned-result">
+          Scanned: {result}
+        </Typography>
+      )}
       <Dialog open={dialogOpen} onClose={handleDialogClose}>
         <DialogTitle>Scan Result</DialogTitle>
         <DialogContent>
-          <p>{dialogMessage}</p>
+          <Typography>{dialogMessage}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose} color="primary">Close</Button>

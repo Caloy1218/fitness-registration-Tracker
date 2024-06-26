@@ -1,31 +1,36 @@
-/* src/components/Header.css */
 .header {
-    background-color: #333;
-    padding: 10px 0;
-  }
-  
-  .nav-menu {
-    display: flex;
-    justify-content: center;
-  }
-  
-  .nav-menu ul {
-    list-style: none;
-    display: flex;
-    gap: 20px;
-  }
-  
-  .nav-menu li {
-    margin: 0;
-  }
-  
-  .nav-menu a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-  }
-  
-  .nav-menu a:hover {
-    text-decoration: underline;
-  }
-  
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-around;
+}
+
+.nav-menu ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 20px;
+}
+
+.nav-menu li {
+  margin: 10px 0;
+}
+
+.nav-menu li a {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+.nav-menu li a:hover {
+  color: #007bff;
+}
